@@ -13,21 +13,24 @@
     :root { color-scheme: light; --bg:#f5f5f7; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#111827; }
     *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
     .wrap{max-width:760px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(36px + env(safe-area-inset-bottom))}
-    h1{font-size:28px;margin:0 0 6px} .sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.5}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}.titlebox{min-width:0;flex:1}
+    h1{font-size:28px;margin:0 0 6px}.sub{color:var(--muted);font-size:14px;margin:0;line-height:1.5}
+    .logos{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto;padding-top:1px}.logos img{display:block;object-fit:contain;border-radius:7px}.logos .eom{width:54px;height:44px;background:#111;padding:2px}.logos .yes{width:74px;height:44px;background:#fff;border:1px solid var(--line);padding:2px}
     .progress{background:#e5e7eb;height:8px;border-radius:999px;overflow:hidden;margin:12px 0 20px}.bar{height:100%;background:#111827;width:0%;transition:.2s}
     .card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
     .qnum{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}.q{font-size:16px;line-height:1.45;font-weight:600;margin-bottom:12px}
-    .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.opts button{appearance:none;border:1px solid var(--line);background:#fafafa;border-radius:12px;padding:10px 2px;font-size:13px;color:var(--text)}
-    .opts button.active{background:#111827;color:#fff;border-color:#111827}.labels{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:6px}
+    .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.opts button{appearance:none;border:1px solid var(--line);background:#fafafa;border-radius:12px;padding:7px 2px 9px;color:var(--text);min-width:0;line-height:1.15}
+    .opts button .word{display:block;font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap;margin-bottom:4px;letter-spacing:-.03em}.opts button .num{display:block;font-size:17px;font-weight:800}
+    .opts button.active{background:#111827;color:#fff;border-color:#111827}.opts button.active .word{color:#fff}
     .result{position:sticky;bottom:10px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
     .score{font-size:32px;font-weight:800}.severity{font-weight:700}.meta{font-size:13px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:8px;margin-top:12px}.actions button{flex:1;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700}.primary{background:#111827;color:white}.secondary{background:#eee;color:#111827}
-    .note{font-size:12px;color:var(--muted);line-height:1.45;margin:18px 2px 0}.install{font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px;line-height:1.45}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin:18px 2px 0}.install{font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0 0;line-height:1.45}
+    @media (max-width:430px){h1{font-size:25px}.logos{gap:5px}.logos .eom{width:46px;height:38px}.logos .yes{width:64px;height:38px}.opts{gap:4px}.opts button .word{font-size:9.5px}.opts button .num{font-size:16px}}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>OSDI Calculator</h1>
-  <div class="sub">Ocular Surface Disease Index · 지난 1주일 동안의 증상을 기준으로 선택하세요.</div>
+  <div class="top"><div class="titlebox"><h1>OSDI Calculator</h1><div class="sub">Ocular Surface Disease Index · 지난 1주일 동안의 증상을 기준으로 선택하세요.</div></div><div class="logos" aria-label="logos"><img class="eom" src="logo_eom.png" alt="EOM logo"><img class="yes" src="logo_yes.jpg" alt="YES Eye Clinic logo"></div></div>
   <div class="install"><b>iPhone 앱처럼 사용:</b> Safari에서 이 페이지를 연 뒤 공유 버튼 → <b>홈 화면에 추가</b></div>
   <div class="progress"><div class="bar" id="bar"></div></div>
   <div id="questions"></div>
@@ -57,11 +60,12 @@ const qs = [
 "습도가 낮고 매우 건조한 장소에서 눈이 불편했습니까?",
 "에어컨이 있는 장소에서 눈이 불편했습니까?"
 ];
+const choices = [{v:4,label:"항상"},{v:3,label:"대부분"},{v:2,label:"절반"},{v:1,label:"가끔"},{v:0,label:"전혀"}];
 const answers = Array(12).fill(null);
 const qwrap = document.getElementById('questions');
 qs.forEach((q,i)=>{
   const c=document.createElement('div'); c.className='card';
-  c.innerHTML=`<div class="qnum">문항 ${i+1}</div><div class="q">${q}</div><div class="opts">${[0,1,2,3,4].map(v=>`<button data-q="${i}" data-v="${v}">${v}</button>`).join('')}</div><div class="labels"><span>전혀 없음</span><span>항상</span></div>`;
+  c.innerHTML=`<div class="qnum">문항 ${i+1}</div><div class="q">${q}</div><div class="opts">${choices.map(x=>`<button data-q="${i}" data-v="${x.v}" aria-label="${x.label} ${x.v}점"><span class="word">${x.label}</span><span class="num">${x.v}</span></button>`).join('')}</div>`;
   qwrap.appendChild(c);
 });
 document.querySelectorAll('.opts button').forEach(b=>b.addEventListener('click',()=>{
