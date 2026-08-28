@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f4f5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="OSDI" />
+  <title>OSDI Calculator</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root { color-scheme: light; --bg:#f5f5f7; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#111827; }
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:760px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(36px + env(safe-area-inset-bottom))}
+    h1{font-size:28px;margin:0 0 6px} .sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.5}
+    .progress{background:#e5e7eb;height:8px;border-radius:999px;overflow:hidden;margin:12px 0 20px}.bar{height:100%;background:#111827;width:0%;transition:.2s}
+    .card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .qnum{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}.q{font-size:16px;line-height:1.45;font-weight:600;margin-bottom:12px}
+    .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.opts button{appearance:none;border:1px solid var(--line);background:#fafafa;border-radius:12px;padding:10px 2px;font-size:13px;color:var(--text)}
+    .opts button.active{background:#111827;color:#fff;border-color:#111827}.labels{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:6px}
+    .result{position:sticky;bottom:10px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+    .score{font-size:32px;font-weight:800}.severity{font-weight:700}.meta{font-size:13px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:8px;margin-top:12px}.actions button{flex:1;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700}.primary{background:#111827;color:white}.secondary{background:#eee;color:#111827}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin:18px 2px 0}.install{font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px;line-height:1.45}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>OSDI Calculator</h1>
+  <div class="sub">Ocular Surface Disease Index · 지난 1주일 동안의 증상을 기준으로 선택하세요.</div>
+  <div class="install"><b>iPhone 앱처럼 사용:</b> Safari에서 이 페이지를 연 뒤 공유 버튼 → <b>홈 화면에 추가</b></div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="questions"></div>
+  <div class="result">
+    <div><span class="score" id="score">—</span> <span>/ 100</span></div>
+    <div class="severity" id="severity">응답을 선택하세요</div>
+    <div class="meta" id="meta">0 / 12 문항 응답</div>
+    <div class="actions">
+      <button class="secondary" onclick="resetAll()">초기화</button>
+      <button class="primary" onclick="copyResult()">결과 복사</button>
+    </div>
+  </div>
+  <div class="note">OSDI 점수 = (응답한 문항 점수의 합 × 25) ÷ 응답한 문항 수. 미응답 문항은 계산에서 제외됩니다. 본 도구는 점수 계산 보조용이며 임상적 판단을 대체하지 않습니다.</div>
+</div>
+<script>
+const qs = [
+"빛에 민감했습니까?",
+"눈이 모래가 들어간 것처럼 까끌거리거나 이물감이 있었습니까?",
+"눈이 아프거나 쓰라렸습니까?",
+"시야가 흐렸습니까?",
+"시력이 좋지 않다고 느꼈습니까?",
+"독서할 때 눈의 불편함 때문에 어려움이 있었습니까?",
+"야간 운전할 때 눈의 불편함 때문에 어려움이 있었습니까?",
+"컴퓨터 작업 또는 은행단말기(ATM) 등을 사용할 때 눈의 불편함 때문에 어려움이 있었습니까?",
+"TV를 볼 때 눈의 불편함 때문에 어려움이 있었습니까?",
+"바람이 부는 환경에서 눈이 불편했습니까?",
+"습도가 낮고 매우 건조한 장소에서 눈이 불편했습니까?",
+"에어컨이 있는 장소에서 눈이 불편했습니까?"
+];
+const answers = Array(12).fill(null);
+const qwrap = document.getElementById('questions');
+qs.forEach((q,i)=>{
+  const c=document.createElement('div'); c.className='card';
+  c.innerHTML=`<div class="qnum">문항 ${i+1}</div><div class="q">${q}</div><div class="opts">${[0,1,2,3,4].map(v=>`<button data-q="${i}" data-v="${v}">${v}</button>`).join('')}</div><div class="labels"><span>전혀 없음</span><span>항상</span></div>`;
+  qwrap.appendChild(c);
+});
+document.querySelectorAll('.opts button').forEach(b=>b.addEventListener('click',()=>{
+  const i=+b.dataset.q,v=+b.dataset.v; answers[i]=v;
+  document.querySelectorAll(`button[data-q="${i}"]`).forEach(x=>x.classList.toggle('active',x===b));
+  update();
+}));
+function update(){
+  const valid=answers.filter(v=>v!==null); const n=valid.length; const sum=valid.reduce((a,b)=>a+b,0);
+  document.getElementById('bar').style.width=`${n/12*100}%`;
+  document.getElementById('meta').textContent=`${n} / 12 문항 응답`;
+  if(!n){document.getElementById('score').textContent='—';document.getElementById('severity').textContent='응답을 선택하세요';return;}
+  const s=sum*25/n; const rounded=Math.round(s*10)/10;
+  document.getElementById('score').textContent=rounded.toFixed(1);
+  let sev='정상'; if(s>=33) sev='중증'; else if(s>=23) sev='중등도'; else if(s>=13) sev='경도';
+  document.getElementById('severity').textContent=sev;
+}
+function resetAll(){answers.fill(null);document.querySelectorAll('.opts button').forEach(b=>b.classList.remove('active'));update();window.scrollTo({top:0,behavior:'smooth'});}
+async function copyResult(){
+  const valid=answers.filter(v=>v!==null); if(!valid.length) return;
+  const sum=valid.reduce((a,b)=>a+b,0), s=Math.round((sum*25/valid.length)*10)/10;
+  let sev='정상'; if(s>=33) sev='중증'; else if(s>=23) sev='중등도'; else if(s>=13) sev='경도';
+  const text=`OSDI ${s.toFixed(1)} / 100 (${sev}), 응답 ${valid.length}/12문항`;
+  try{await navigator.clipboard.writeText(text); alert('결과를 복사했습니다.');}catch(e){prompt('결과를 복사하세요:',text);}
+}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+update();
+</script>
+</body>
+</html>
