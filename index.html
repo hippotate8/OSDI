@@ -12,27 +12,28 @@
   <style>
     :root { color-scheme: light; --bg:#f5f5f7; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#111827; }
     *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:760px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(36px + env(safe-area-inset-bottom))}
-    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}.titlebox{min-width:0;flex:1}
-    h1{font-size:28px;margin:0 0 6px}.sub{color:var(--muted);font-size:14px;margin:0;line-height:1.5}
-    .logos{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto;padding-top:1px}.logos img{display:block;object-fit:contain;border:0!important;outline:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;background:transparent!important}.logos .eom{width:54px;height:44px}.logos .yes{width:74px;height:44px}
-    .progress{background:#e5e7eb;height:8px;border-radius:999px;overflow:hidden;margin:12px 0 20px}.bar{height:100%;background:#111827;width:0%;transition:.2s}
+    .wrap{max-width:760px;margin:0 auto;padding:0 16px calc(36px + env(safe-area-inset-bottom))}
+    .sticky-head{position:sticky;top:0;z-index:100;background:rgba(245,245,247,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:calc(10px + env(safe-area-inset-top)) 0 8px;border-bottom:1px solid rgba(229,231,235,.9);margin-bottom:12px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:6px}.titlebox{min-width:0;flex:1}
+    h1{font-size:29px;margin:0 0 5px}.sub{color:var(--muted);font-size:14.5px;margin:0;line-height:1.4}
+    .logos{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex:0 0 auto}.logos img{display:block;object-fit:contain;border:0!important;outline:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;background:transparent!important}.logos .eom{width:72px;height:58px}.logos .yes{width:98px;height:58px}
+    .progress{background:#e5e7eb;height:7px;border-radius:999px;overflow:hidden;margin:8px 0 0}.bar{height:100%;background:#111827;width:0%;transition:.2s}
     .card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-    .qnum{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px}.q{font-size:16px;line-height:1.45;font-weight:600;margin-bottom:12px}
+    .qnum{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:7px}.q{font-size:18px;line-height:1.45;font-weight:650;margin-bottom:14px}
     .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.opts button{appearance:none;border:1px solid var(--line);background:#fafafa;border-radius:12px;padding:7px 2px 9px;color:var(--text);min-width:0;line-height:1.15}
-    .opts button .word{display:block;font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap;margin-bottom:4px;letter-spacing:-.03em}.opts button .num{display:block;font-size:17px;font-weight:800}
+    .opts button .word{display:block;font-size:12px;color:var(--muted);font-weight:650;white-space:nowrap;margin-bottom:5px;letter-spacing:-.03em}.opts button .num{display:block;font-size:19px;font-weight:800}
     .opts button.active{background:#111827;color:#fff;border-color:#111827}.opts button.active .word{color:#fff}
     .result{position:sticky;bottom:10px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
     .score{font-size:32px;font-weight:800}.severity{font-weight:700}.meta{font-size:13px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:8px;margin-top:12px}.actions button{flex:1;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700}.primary{background:#111827;color:white}.secondary{background:#eee;color:#111827}
-    .note{font-size:12px;color:var(--muted);line-height:1.45;margin:18px 2px 0}.install{font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:14px 0 0;line-height:1.45}
-    @media (max-width:430px){h1{font-size:25px}.logos{gap:5px}.logos .eom{width:46px;height:38px}.logos .yes{width:64px;height:38px}.opts{gap:4px}.opts button .word{font-size:9.5px}.opts button .num{font-size:16px}}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin:18px 2px 0}
+    @media (max-width:430px){.wrap{padding-left:10px;padding-right:10px}.sticky-head{padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:7px}.top{gap:8px}.titlebox{max-width:55%}h1{font-size:23px;margin-bottom:3px}.sub{font-size:12.5px;line-height:1.3}.logos{gap:5px}.logos .eom{width:61px;height:49px}.logos .yes{width:83px;height:49px}.card{padding:15px 12px}.qnum{font-size:13px}.q{font-size:17px}.opts{gap:4px}.opts button{padding:8px 1px 10px}.opts button .word{font-size:11px}.opts button .num{font-size:18px}.result{bottom:6px}}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><div class="titlebox"><h1>OSDI Calculator</h1><div class="sub">Ocular Surface Disease Index · 지난 1주일 동안의 증상을 기준으로 선택하세요.</div></div><div class="logos" aria-label="logos"><img class="eom" src="logo_eom.png" alt="EOM logo"><a href="https://yes-oph.com/" target="_blank" rel="noopener noreferrer" aria-label="YES Eye Clinic 홈페이지"><img class="yes" src="logo_yes.jpg" alt="YES Eye Clinic logo"></a></div></div>
-  <div class="install"><b>iPhone 앱처럼 사용:</b> Safari에서 이 페이지를 연 뒤 공유 버튼 → <b>홈 화면에 추가</b></div>
-  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div class="sticky-head">
+    <div class="top"><div class="titlebox"><h1>OSDI Calculator</h1><div class="sub">Ocular Surface Disease Index · 지난 1주일 동안의 증상을 기준으로 선택하세요.</div></div><div class="logos" aria-label="logos"><img class="eom" src="logo_eom.png" alt="EOM logo"><a href="https://yes-oph.com/" target="_blank" rel="noopener noreferrer" aria-label="YES Eye Clinic 홈페이지"><img class="yes" src="logo_yes.jpg" alt="YES Eye Clinic logo"></a></div></div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+  </div>
   <div id="questions"></div>
   <div class="result">
     <div><span class="score" id="score">—</span> <span>/ 100</span></div>
