@@ -92,7 +92,27 @@ async function copyResult(){
   const text=`OSDI ${s.toFixed(1)} / 100 (${sev}), 응답 ${valid.length}/12문항`;
   try{await navigator.clipboard.writeText(text); alert('결과를 복사했습니다.');}catch(e){prompt('결과를 복사하세요:',text);}
 }
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if ('serviceWorker' in navigator) {
+  let reloadingForUpdate = false;
+
+  // If an updated service worker takes control while the app is open,
+  // reload once so the newest GitHub version appears immediately.
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingForUpdate) return;
+    reloadingForUpdate = true;
+    window.location.reload();
+  });
+
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+      // Explicitly check GitHub for a newer worker whenever the app opens online.
+      await reg.update();
+    } catch (e) {
+      // Offline is expected and supported after the first successful install/cache.
+    }
+  });
+}
 update();
 </script>
 </body>
