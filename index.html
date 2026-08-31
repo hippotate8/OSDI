@@ -22,6 +22,7 @@
     .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.opts button{appearance:none;border:1px solid var(--line);background:#fafafa;border-radius:12px;padding:7px 2px 9px;color:var(--text);min-width:0;line-height:1.15}
     .opts button .word{display:block;font-size:12px;color:var(--muted);font-weight:650;white-space:nowrap;margin-bottom:5px;letter-spacing:-.03em}.opts button .num{display:block;font-size:19px;font-weight:800}
     .opts button.active{background:#111827;color:#fff;border-color:#111827}.opts button.active .word{color:#fff}
+    .na-row{margin-top:7px}.na-btn{width:100%;appearance:none;border:1px solid var(--line);background:#f3f4f6;border-radius:12px;padding:9px 10px;color:var(--text);font-size:13px;font-weight:700}.na-btn.active{background:#111827;color:#fff;border-color:#111827}
     .result{position:sticky;bottom:10px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
     .score{font-size:32px;font-weight:800}.severity{font-weight:700}.meta{font-size:13px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:8px;margin-top:12px}.actions button{flex:1;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700}.primary{background:#111827;color:white}.secondary{background:#eee;color:#111827}
     .note{font-size:12px;color:var(--muted);line-height:1.45;margin:18px 2px 0}
@@ -44,7 +45,7 @@
       <button class="primary" onclick="copyResult()">결과 복사</button>
     </div>
   </div>
-  <div class="note">OSDI 점수 = (응답한 문항 점수의 합 × 25) ÷ 응답한 문항 수. 미응답 문항은 계산에서 제외됩니다. 본 도구는 점수 계산 보조용이며 임상적 판단을 대체하지 않습니다.</div>
+  <div class="note">OSDI 점수 = (응답한 문항 점수의 합 × 25) ÷ 점수 계산에 포함된 문항 수. 문항 6–9의 해당 없음(N/A)과 미응답 문항은 계산에서 제외됩니다. 본 도구는 점수 계산 보조용이며 임상적 판단을 대체하지 않습니다.</div>
 </div>
 <script>
 const qs = [
@@ -66,7 +67,8 @@ const answers = Array(12).fill(null);
 const qwrap = document.getElementById('questions');
 qs.forEach((q,i)=>{
   const c=document.createElement('div'); c.className='card';
-  c.innerHTML=`<div class="qnum">문항 ${i+1}</div><div class="q">${q}</div><div class="opts">${choices.map(x=>`<button data-q="${i}" data-v="${x.v}" aria-label="${x.label} ${x.v}점"><span class="word">${x.label}</span><span class="num">${x.v}</span></button>`).join('')}</div>`;
+  const na = (i >= 5 && i <= 8) ? `<div class="na-row"><button class="na-btn" data-q="${i}" data-na="1" aria-label="해당 없음">해당 없음 (N/A)</button></div>` : '';
+  c.innerHTML=`<div class="qnum">문항 ${i+1}</div><div class="q">${q}</div><div class="opts">${choices.map(x=>`<button data-q="${i}" data-v="${x.v}" aria-label="${x.label} ${x.v}점"><span class="word">${x.label}</span><span class="num">${x.v}</span></button>`).join('')}</div>${na}`;
   qwrap.appendChild(c);
 });
 document.querySelectorAll('.opts button').forEach(b=>b.addEventListener('click',()=>{
@@ -74,11 +76,18 @@ document.querySelectorAll('.opts button').forEach(b=>b.addEventListener('click',
   document.querySelectorAll(`button[data-q="${i}"]`).forEach(x=>x.classList.toggle('active',x===b));
   update();
 }));
+document.querySelectorAll('.na-btn').forEach(b=>b.addEventListener('click',()=>{
+  const i=+b.dataset.q; answers[i]='na';
+  document.querySelectorAll(`button[data-q="${i}"]`).forEach(x=>x.classList.toggle('active',x===b));
+  update();
+}));
 function update(){
-  const valid=answers.filter(v=>v!==null); const n=valid.length; const sum=valid.reduce((a,b)=>a+b,0);
-  document.getElementById('bar').style.width=`${n/12*100}%`;
-  document.getElementById('meta').textContent=`${n} / 12 문항 응답`;
-  if(!n){document.getElementById('score').textContent='—';document.getElementById('severity').textContent='응답을 선택하세요';return;}
+  const completed=answers.filter(v=>v!==null).length;
+  const valid=answers.filter(v=>typeof v==='number'); const n=valid.length; const sum=valid.reduce((a,b)=>a+b,0);
+  const naCount=answers.filter(v=>v==='na').length;
+  document.getElementById('bar').style.width=`${completed/12*100}%`;
+  document.getElementById('meta').textContent=naCount ? `${completed} / 12 문항 응답 · 점수 계산 ${n}문항 (N/A ${naCount})` : `${completed} / 12 문항 응답`;
+  if(!n){document.getElementById('score').textContent='—';document.getElementById('severity').textContent=completed ? '점수 계산 가능한 응답이 없습니다' : '응답을 선택하세요';return;}
   const s=sum*25/n; const rounded=Math.round(s*10)/10;
   document.getElementById('score').textContent=rounded.toFixed(1);
   let sev='정상'; if(s>=33) sev='중증'; else if(s>=23) sev='중등도'; else if(s>=13) sev='경도';
@@ -86,10 +95,11 @@ function update(){
 }
 function resetAll(){answers.fill(null);document.querySelectorAll('.opts button').forEach(b=>b.classList.remove('active'));update();window.scrollTo({top:0,behavior:'smooth'});}
 async function copyResult(){
-  const valid=answers.filter(v=>v!==null); if(!valid.length) return;
+  const valid=answers.filter(v=>typeof v==='number'); if(!valid.length) return;
+  const naCount=answers.filter(v=>v==='na').length;
   const sum=valid.reduce((a,b)=>a+b,0), s=Math.round((sum*25/valid.length)*10)/10;
   let sev='정상'; if(s>=33) sev='중증'; else if(s>=23) sev='중등도'; else if(s>=13) sev='경도';
-  const text=`OSDI ${s.toFixed(1)} / 100 (${sev}), 응답 ${valid.length}/12문항`;
+  const text=`OSDI ${s.toFixed(1)} / 100 (${sev}), 점수 계산 ${valid.length}문항${naCount ? `, N/A ${naCount}문항` : ''}`;
   try{await navigator.clipboard.writeText(text); alert('결과를 복사했습니다.');}catch(e){prompt('결과를 복사하세요:',text);}
 }
 if ('serviceWorker' in navigator) {

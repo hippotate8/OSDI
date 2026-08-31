@@ -1,4 +1,4 @@
-const CACHE = 'osdi-v6-offline';
+const CACHE = 'osdi-v7-offline';
 const APP_SHELL = [
   './',
   './index.html',
